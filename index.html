@@ -1,0 +1,727 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="theme-color" content="#0c0c14">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Card→Sheet">
+<link rel="manifest" href="data:application/json,{
+  &quot;name&quot;: &quot;Card→Sheet&quot;,
+  &quot;short_name&quot;: &quot;CardSheet&quot;,
+  &quot;start_url&quot;: &quot;.&quot;,
+  &quot;display&quot;: &quot;standalone&quot;,
+  &quot;background_color&quot;: &quot;#0c0c14&quot;,
+  &quot;theme_color&quot;: &quot;#0c0c14&quot;,
+  &quot;orientation&quot;: &quot;portrait&quot;,
+  &quot;icons&quot;: [{
+    &quot;src&quot;: &quot;data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><rect width='100' height='100' rx='20' fill='%230c0c14'/><text y='.9em' font-size='80' x='10'>🪪</text></svg>&quot;,
+    &quot;sizes&quot;: &quot;any&quot;,
+    &quot;type&quot;: &quot;image/svg+xml&quot;
+  }]
+}">
+
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Card→Sheet | Business Card Scanner</title>
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@700;800&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  :root {
+    --bg: #0c0c14;
+    --surface: #13131f;
+    --card: #1a1a2e;
+    --border: #2a2a40;
+    --accent: #f59e0b;
+    --accent2: #fb923c;
+    --green: #22c55e;
+    --red: #ef4444;
+    --text: #e2e8f0;
+    --muted: #64748b;
+    --mono: 'Space Mono', monospace;
+    --display: 'Syne', sans-serif;
+  }
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: var(--mono);
+    min-height: 100vh;
+    padding: 28px 20px 60px;
+  }
+  /* scrollbar */
+  ::-webkit-scrollbar { width: 5px; }
+  ::-webkit-scrollbar-track { background: transparent; }
+  ::-webkit-scrollbar-thumb { background: #2a2a40; border-radius: 4px; }
+
+  /* HEADER */
+  .header {
+    max-width: 860px;
+    margin: 0 auto 28px;
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-end;
+    flex-wrap: wrap;
+    gap: 14px;
+  }
+  .logo { font-family: var(--display); font-size: 32px; font-weight: 800; letter-spacing: -1px; }
+  .logo span { color: var(--accent); }
+  .tagline { font-size: 10px; color: var(--muted); letter-spacing: 3px; margin-top: 3px; }
+  .header-actions { display: flex; gap: 10px; align-items: center; }
+  .badge { background: rgba(245,158,11,0.1); border: 1px solid rgba(245,158,11,0.25); border-radius: 20px; padding: 5px 14px; font-size: 11px; color: var(--accent); letter-spacing: 1px; }
+  .setup-btn {
+    background: var(--card); border: 1px solid var(--border); border-radius: 8px;
+    padding: 7px 16px; color: var(--muted); font-size: 11px; cursor: pointer;
+    font-family: var(--mono); letter-spacing: 1px; transition: all .2s;
+  }
+  .setup-btn:hover { border-color: var(--accent); color: var(--accent); }
+
+  /* SETUP PANEL */
+  .setup-panel {
+    max-width: 860px; margin: 0 auto 20px;
+    background: rgba(245,158,11,0.04);
+    border: 1px solid rgba(245,158,11,0.2);
+    border-radius: 14px; padding: 22px;
+    display: none;
+  }
+  .setup-panel.open { display: block; animation: fadeUp .2s ease; }
+  .setup-title { font-size: 10px; color: var(--accent); letter-spacing: 3px; margin-bottom: 14px; }
+  .setup-steps { font-size: 12px; color: var(--muted); line-height: 2; margin-bottom: 14px; }
+  .setup-steps b { color: var(--text); }
+  .code-block {
+    background: var(--bg); border-radius: 10px; padding: 16px;
+    font-size: 11px; color: #7c8aa0; line-height: 1.8;
+    margin-bottom: 14px; overflow-x: auto; white-space: pre;
+    border: 1px solid var(--border);
+  }
+  .url-input {
+    width: 100%; background: var(--bg); border: 1px solid rgba(245,158,11,0.3);
+    border-radius: 8px; color: var(--text); padding: 11px 14px;
+    font-size: 12px; font-family: var(--mono); outline: none; margin-bottom: 12px;
+    transition: border-color .2s;
+  }
+  .url-input:focus { border-color: var(--accent); }
+  .save-setup-btn {
+    background: var(--accent); border: none; border-radius: 8px; padding: 10px 22px;
+    color: #0c0c14; font-weight: 700; font-family: var(--mono); font-size: 11px;
+    letter-spacing: 1px; cursor: pointer; transition: background .2s;
+  }
+  .save-setup-btn:hover { background: #d97706; }
+
+  /* MAIN GRID */
+  .main { max-width: 860px; margin: 0 auto; display: grid; grid-template-columns: 1fr 1fr; gap: 18px; }
+  @media (max-width: 640px) { .main { grid-template-columns: 1fr; } }
+
+  /* LEFT COLUMN */
+  .left { display: flex; flex-direction: column; gap: 14px; }
+
+  /* DROP ZONE */
+  .drop-zone {
+    border: 2px dashed var(--border); border-radius: 14px;
+    background: var(--surface); cursor: pointer;
+    min-height: 210px; display: flex; align-items: center; justify-content: center;
+    overflow: hidden; transition: all .25s; position: relative;
+  }
+  .drop-zone:hover, .drop-zone.dragover { border-color: var(--accent); background: rgba(245,158,11,0.05); }
+  .drop-zone img { width: 100%; height: 210px; object-fit: contain; padding: 10px; }
+  .drop-placeholder { text-align: center; padding: 24px; pointer-events: none; }
+  .drop-icon { font-size: 38px; margin-bottom: 12px; }
+  .drop-label { color: var(--accent); font-size: 11px; letter-spacing: 3px; }
+  .drop-sub { color: var(--muted); font-size: 10px; margin-top: 6px; }
+  .change-hint {
+    position: absolute; bottom: 8px; right: 10px;
+    font-size: 10px; color: var(--muted); letter-spacing: 1px;
+  }
+
+  /* VOICE */
+  .voice-box {
+    background: var(--card); border: 1px solid var(--border);
+    border-radius: 12px; padding: 16px;
+  }
+  .voice-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; }
+  .section-label { font-size: 10px; color: var(--accent); letter-spacing: 3px; }
+  .rec-btn {
+    border-radius: 20px; padding: 5px 14px; font-size: 10px;
+    font-family: var(--mono); letter-spacing: 1px; cursor: pointer;
+    transition: all .15s; border: 1px solid rgba(239,68,68,0.3);
+    background: rgba(239,68,68,0.08); color: var(--red);
+  }
+  .rec-btn.active { background: var(--red); color: #fff; border-color: var(--red); }
+  .rec-btn.pulse { background: #b91c1c; }
+  textarea.voice-area {
+    width: 100%; background: var(--bg); border: 1px solid var(--border);
+    border-radius: 8px; color: var(--text); padding: 10px 12px;
+    font-size: 12px; font-family: var(--mono); resize: vertical;
+    line-height: 1.7; outline: none; min-height: 80px;
+    transition: border-color .2s, color .2s;
+  }
+  textarea.voice-area:focus { border-color: var(--accent); }
+  textarea.voice-area.listening { color: #86efac; border-color: rgba(34,197,94,0.4); }
+
+  /* SCAN BUTTON */
+  .scan-btn {
+    border: none; border-radius: 12px; padding: 15px;
+    font-family: var(--display); font-size: 14px; font-weight: 800;
+    letter-spacing: 3px; cursor: pointer; transition: all .2s;
+    display: flex; align-items: center; justify-content: center; gap: 10px;
+  }
+  .scan-btn.ready { background: var(--accent); color: #0c0c14; }
+  .scan-btn.ready:hover { background: #d97706; transform: translateY(-1px); }
+  .scan-btn.disabled { background: var(--card); color: var(--muted); cursor: not-allowed; border: 1px solid var(--border); }
+  .scan-btn.scanning { background: rgba(245,158,11,0.15); color: var(--accent); cursor: default; border: 1px solid rgba(245,158,11,0.3); }
+  .spin { display: inline-block; animation: spin .7s linear infinite; }
+
+  /* RIGHT COLUMN */
+  .right {
+    background: var(--card); border: 1px solid var(--border);
+    border-radius: 14px; padding: 20px; display: flex; flex-direction: column; gap: 0;
+  }
+  .field-label { font-size: 10px; color: var(--accent); letter-spacing: 3px; margin-bottom: 5px; }
+  .field-wrap { margin-bottom: 13px; }
+  .field-input {
+    width: 100%; background: var(--surface); border: 1px solid var(--border);
+    border-radius: 8px; color: var(--text); padding: 9px 13px;
+    font-size: 13px; font-family: var(--mono); outline: none; transition: border-color .2s;
+  }
+  .field-input:focus { border-color: var(--accent); }
+  textarea.field-input { resize: vertical; min-height: 70px; line-height: 1.6; }
+  .fields { flex: 1; }
+
+  /* ALERTS */
+  .alert { border-radius: 8px; padding: 11px 14px; font-size: 11px; margin-bottom: 12px; }
+  .alert.error { background: rgba(239,68,68,0.08); border: 1px solid rgba(239,68,68,0.25); color: #fca5a5; }
+  .alert.success { background: rgba(34,197,94,0.08); border: 1px solid rgba(34,197,94,0.25); color: #86efac; text-align: center; animation: pop .4s ease; }
+
+  /* SAVE BUTTON */
+  .save-btn {
+    border: none; border-radius: 12px; padding: 15px;
+    font-family: var(--display); font-size: 14px; font-weight: 800;
+    letter-spacing: 3px; cursor: pointer; transition: all .2s; width: 100%; margin-top: 8px;
+  }
+  .save-btn.ready { background: var(--green); color: #fff; }
+  .save-btn.ready:hover { background: #16a34a; transform: translateY(-1px); }
+  .save-btn.disabled { background: var(--surface); color: var(--muted); cursor: not-allowed; border: 1px solid var(--border); }
+
+  /* SESSION LOG */
+  .log-section {
+    max-width: 860px; margin: 18px auto 0;
+    background: var(--card); border: 1px solid var(--border);
+    border-radius: 14px; padding: 20px; display: none;
+  }
+  .log-section.visible { display: block; animation: fadeUp .3s ease; }
+  .log-row {
+    display: grid; grid-template-columns: 1fr 1fr 1.5fr 1fr 55px;
+    gap: 10px; background: var(--surface); border-radius: 8px;
+    padding: 9px 13px; font-size: 11px; color: var(--muted);
+    margin-bottom: 6px; align-items: center;
+  }
+  .log-row .name { color: var(--text); font-weight: 700; }
+  .log-row .email { color: #60a5fa; }
+  .log-row .time { color: #3f4f63; font-size: 10px; }
+
+  /* KEYFRAMES */
+
+  /* MOBILE */
+  @media (max-width: 480px) {
+    body { padding: 16px 12px 80px; }
+    .main { grid-template-columns: 1fr !important; }
+    .logo { font-size: 26px; }
+    .drop-zone { min-height: 180px; }
+    .scan-btn, .save-btn { padding: 18px; font-size: 15px; }
+    .field-input { font-size: 16px !important; padding: 12px 14px !important; }
+  }
+
+  @keyframes spin { to { transform: rotate(360deg); } }
+  @keyframes fadeUp { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }
+  @keyframes pop { 0%,100% { transform: scale(1); } 50% { transform: scale(1.03); } }
+</style>
+<script src="https://accounts.google.com/gsi/client" async defer></script>
+<script src="https://apis.google.com/js/api.js"></script>
+</head>
+<body>
+
+<!-- HEADER -->
+<div class="header">
+  <div>
+    <div class="logo">Card<span>→Sheet</span></div>
+    <div class="tagline">CONFERENCE CONTACT CAPTURE</div>
+  </div>
+  <div class="header-actions">
+    <div class="badge" id="savedBadge">0 saved today</div>
+    <button class="setup-btn" id="googleConnectBtn" onclick="toggleGooglePanel()" style="border-color:rgba(66,133,244,0.4);color:#4285f4;">🔵 Connect Sheets</button>
+  </div>
+</div>
+
+<!-- API key handled server-side -->
+
+<!-- GOOGLE CONNECT PANEL -->
+<div class="setup-panel" id="googlePanel" style="border-color:rgba(66,133,244,0.3);background:rgba(66,133,244,0.04);">
+  <div class="setup-title" style="color:#4285f4">GOOGLE SHEETS CONNECTION</div>
+  <div id="gNotConnected">
+    <div class="setup-steps" style="margin-bottom:14px">Connect your Google account to automatically save contacts to a new spreadsheet.</div>
+    <div id="googleSignInBtn" style="display:inline-block;cursor:pointer;background:#4285f4;border-radius:8px;padding:11px 22px;color:#fff;font-size:13px;font-family:var(--mono);letter-spacing:1px;border:none;" onclick="signInGoogle()">
+      <span style="margin-right:8px">🔵</span> Sign in with Google
+    </div>
+  </div>
+  <div id="gConnected" style="display:none">
+    <div style="display:flex;align-items:center;gap:12px;margin-bottom:12px">
+      <img id="gAvatar" src="" style="width:36px;height:36px;border-radius:50%;border:2px solid #4285f4" onerror="this.style.display='none'">
+      <div>
+        <div id="gName" style="color:#f1f5f9;font-size:13px;font-weight:700"></div>
+        <div id="gEmail" style="color:#64748b;font-size:11px"></div>
+      </div>
+      <div style="margin-left:auto;background:rgba(34,197,94,0.1);border:1px solid rgba(34,197,94,0.3);border-radius:20px;padding:4px 12px;color:#22c55e;font-size:10px;letter-spacing:1px">✓ CONNECTED</div>
+    </div>
+    <div class="field-label" style="margin-bottom:6px">SPREADSHEET NAME</div>
+    <input class="url-input" id="sheetName" type="text" placeholder="Conference Contacts 2026" style="margin-bottom:12px"/>
+    <div style="font-size:11px;color:#64748b;margin-bottom:12px">A new Google Sheet with this name will be created in your Google Drive automatically.</div>
+    <button class="save-setup-btn" style="background:#4285f4;" onclick="saveGoogleSetup()">CONFIRM & CLOSE ✓</button>
+    <button onclick="signOutGoogle()" style="margin-left:10px;background:transparent;border:1px solid #334155;border-radius:6px;padding:8px 16px;color:#64748b;font-size:11px;cursor:pointer;font-family:var(--mono);">Sign out</button>
+  </div>
+</div>
+
+<!-- MAIN GRID -->
+<div class="main">
+
+  <!-- LEFT: Upload + Voice -->
+  <div class="left">
+
+    <!-- Drop Zone -->
+    <div class="drop-zone" id="dropZone" onclick="document.getElementById('fileInput').click()"
+      ondrop="handleDrop(event)" ondragover="handleDragOver(event)" ondragleave="handleDragLeave(event)">
+      <input type="file" id="fileInput" accept="image/*" style="display:none" onchange="handleFileInput(event)">
+      <div class="drop-placeholder" id="dropPlaceholder">
+        <div class="drop-icon">🪪</div>
+        <div class="drop-label">DROP CARD PHOTO HERE</div>
+        <div class="drop-sub">or click to browse from your phone / computer</div>
+      </div>
+    </div>
+
+    <!-- Voice Notes -->
+    <div class="voice-box">
+      <div class="voice-header">
+        <div class="section-label">VOICE NOTES</div>
+        <button class="rec-btn" id="recBtn" onclick="toggleRecording()">⏺ RECORD</button>
+      </div>
+      <textarea class="voice-area" id="voiceArea" rows="3" placeholder="Hit Record and speak your meeting notes, or type here..."></textarea>
+    </div>
+
+    <!-- Scan Button -->
+    <button class="scan-btn disabled" id="scanBtn" onclick="scanCard()">⚡ SCAN WITH AI</button>
+  </div>
+
+  <!-- RIGHT: Extracted Data -->
+  <div class="right">
+    <div class="section-label" style="margin-bottom:16px">EXTRACTED DATA</div>
+    <div id="alertBox"></div>
+    <div class="fields">
+      <div class="field-wrap">
+        <div class="field-label">FULL NAME</div>
+        <input class="field-input" id="fName" type="text" placeholder="—">
+      </div>
+      <div class="field-wrap">
+        <div class="field-label">COMPANY</div>
+        <input class="field-input" id="fCompany" type="text" placeholder="—">
+      </div>
+      <div class="field-wrap">
+        <div class="field-label">EMAIL ADDRESS</div>
+        <input class="field-input" id="fEmail" type="email" placeholder="—">
+      </div>
+      <div class="field-wrap">
+        <div class="field-label">PHONE NUMBER</div>
+        <input class="field-input" id="fPhone" type="tel" placeholder="—">
+      </div>
+      <div class="field-wrap">
+        <div class="field-label">MEETING NOTES</div>
+        <textarea class="field-input" id="fNotes" placeholder="Notes from your voice recording or type here..."></textarea>
+      </div>
+    </div>
+    <button class="save-btn disabled" id="saveBtn" onclick="saveToSheets()">📊 SAVE TO GOOGLE SHEETS</button>
+  </div>
+</div>
+
+<!-- SESSION LOG -->
+<div class="log-section" id="logSection">
+  <div class="section-label" style="margin-bottom:14px" id="logTitle">SESSION LOG — 0 CONTACTS</div>
+  <div id="logRows"></div>
+</div>
+
+<script>
+  let imageFile = null;
+  let scanDone = false;
+  let recording = false;
+  let recognition = null;
+  let finalTranscript = '';
+  let pulseTimer = null;
+  let savedCount = 0;
+  // ── CONFIG — paste your Google OAuth Client ID here ──────
+  const GOOGLE_CLIENT_ID = localStorage.getItem('cardsheet_gclientid') || '29614145984-l44ucvorhl6ar2tk9vp50k8ohqc0vor0.apps.googleusercontent.com';
+  const GAPI_DISCOVERY = 'https://sheets.googleapis.com/$discovery/rest?version=v4';
+  const SCOPES = 'https://www.googleapis.com/auth/spreadsheets https://www.googleapis.com/auth/drive.file profile email';
+
+  // API key is handled server-side
+  let gAccessToken = localStorage.getItem('cardsheet_gtoken') || '';
+  let spreadsheetId = localStorage.getItem('cardsheet_sheetid') || '';
+  let sheetNamePref = localStorage.getItem('cardsheet_sheetname') || 'Conference Contacts';
+  let gUserName = localStorage.getItem('cardsheet_gname') || '';
+  let gUserEmail = localStorage.getItem('cardsheet_gemail') || '';
+  let gUserAvatar = localStorage.getItem('cardsheet_gavatar') || '';
+  let tokenClient = null;
+  // API key is handled server-side
+
+  // Restore saved values
+
+  updateGoogleUI();
+
+  // ── SETUP ──────────────────────────────────────────────
+  function toggleSetup() { /* removed */ }
+  function toggleGooglePanel() {
+    document.getElementById('googlePanel').classList.toggle('open');
+    document.getElementById('setupPanel').classList.remove('open');
+  }
+  function saveSetup() { /* removed */ }
+  function saveGoogleSetup() {
+    sheetNamePref = document.getElementById('sheetName').value.trim() || 'Conference Contacts';
+    localStorage.setItem('cardsheet_sheetname', sheetNamePref);
+    spreadsheetId = '';
+    localStorage.removeItem('cardsheet_sheetid');
+    document.getElementById('googlePanel').classList.remove('open');
+  }
+
+  // ── GOOGLE AUTH ────────────────────────────────────────
+  function initGoogleAuth() {
+    if (!window.google || GOOGLE_CLIENT_ID === 'YOUR_GOOGLE_CLIENT_ID') return;
+    tokenClient = google.accounts.oauth2.initTokenClient({
+      client_id: GOOGLE_CLIENT_ID,
+      scope: SCOPES,
+      callback: async (resp) => {
+        if (resp.error) { showAlert('error', '⚠ Google sign-in failed: ' + resp.error); return; }
+        gAccessToken = resp.access_token;
+        localStorage.setItem('cardsheet_gtoken', gAccessToken);
+        // Fetch user profile
+        try {
+          const r = await fetch('https://www.googleapis.com/oauth2/v3/userinfo', {
+            headers: { Authorization: 'Bearer ' + gAccessToken }
+          });
+          const u = await r.json();
+          gUserName = u.name || ''; gUserEmail = u.email || ''; gUserAvatar = u.picture || '';
+          localStorage.setItem('cardsheet_gname', gUserName);
+          localStorage.setItem('cardsheet_gemail', gUserEmail);
+          localStorage.setItem('cardsheet_gavatar', gUserAvatar);
+        } catch(e) {}
+        updateGoogleUI();
+      }
+    });
+  }
+  window.addEventListener('load', () => setTimeout(initGoogleAuth, 1000));
+
+  function signInGoogle() {
+    if (!tokenClient) { showAlert('error', '⚠ Google auth not ready. Check your Client ID in the source.'); return; }
+    tokenClient.requestAccessToken();
+  }
+
+  function signOutGoogle() {
+    if (gAccessToken && window.google) google.accounts.oauth2.revoke(gAccessToken);
+    gAccessToken = ''; spreadsheetId = ''; gUserName = ''; gUserEmail = ''; gUserAvatar = '';
+    ['cardsheet_gtoken','cardsheet_sheetid','cardsheet_gname','cardsheet_gemail','cardsheet_gavatar'].forEach(k => localStorage.removeItem(k));
+    updateGoogleUI();
+  }
+
+  function updateGoogleUI() {
+    const connected = !!gAccessToken;
+    const btn = document.getElementById('googleConnectBtn');
+    if (btn) {
+      btn.textContent = connected ? '✓ Sheets Connected' : '🔵 Connect Sheets';
+      btn.style.color = connected ? '#22c55e' : '#4285f4';
+      btn.style.borderColor = connected ? 'rgba(34,197,94,0.4)' : 'rgba(66,133,244,0.4)';
+    }
+    const nc = document.getElementById('gNotConnected');
+    const c = document.getElementById('gConnected');
+    if (nc) nc.style.display = connected ? 'none' : 'block';
+    if (c) c.style.display = connected ? 'block' : 'none';
+    if (connected) {
+      const av = document.getElementById('gAvatar');
+      const gn = document.getElementById('gName');
+      const ge = document.getElementById('gEmail');
+      const sn = document.getElementById('sheetName');
+      if (av) av.src = gUserAvatar;
+      if (gn) gn.textContent = gUserName;
+      if (ge) ge.textContent = gUserEmail;
+      if (sn) sn.value = sheetNamePref;
+    }
+  }
+
+  // ── CREATE / GET SPREADSHEET ───────────────────────────
+  async function getOrCreateSheet() {
+    if (spreadsheetId) return spreadsheetId;
+    const name = sheetNamePref || 'Conference Contacts';
+    const res = await fetch('https://sheets.googleapis.com/v4/spreadsheets', {
+      method: 'POST',
+      headers: { Authorization: 'Bearer ' + gAccessToken, 'Content-Type': 'application/json' },
+      body: JSON.stringify({ properties: { title: name }, sheets: [{ properties: { title: 'Contacts' } }] })
+    });
+    const data = await res.json();
+    if (!res.ok) throw new Error(data.error?.message || 'Could not create spreadsheet');
+    spreadsheetId = data.spreadsheetId;
+    localStorage.setItem('cardsheet_sheetid', spreadsheetId);
+    // Add header row
+    await appendToSheet([['Name', 'Company', 'Email', 'Phone', 'Notes', 'Timestamp']]);
+    return spreadsheetId;
+  }
+
+  async function appendToSheet(values) {
+    const sid = await getOrCreateSheet();
+    const res = await fetch(
+      'https://sheets.googleapis.com/v4/spreadsheets/' + sid + '/values/Contacts!A1:F1:append?valueInputOption=USER_ENTERED&insertDataOption=INSERT_ROWS',
+      { method: 'POST', headers: { Authorization: 'Bearer ' + gAccessToken, 'Content-Type': 'application/json' }, body: JSON.stringify({ values }) }
+    );
+    const data = await res.json();
+    if (!res.ok) throw new Error(data.error?.message || 'Could not write to sheet');
+  }
+
+  // ── FILE HANDLING ──────────────────────────────────────
+  function handleDragOver(e) { e.preventDefault(); document.getElementById('dropZone').classList.add('dragover'); }
+  function handleDragLeave() { document.getElementById('dropZone').classList.remove('dragover'); }
+  function handleDrop(e) {
+    e.preventDefault();
+    document.getElementById('dropZone').classList.remove('dragover');
+    const f = e.dataTransfer.files[0];
+    if (f && f.type.startsWith('image/')) loadImage(f);
+  }
+  function handleFileInput(e) { if (e.target.files[0]) loadImage(e.target.files[0]); }
+
+  function loadImage(file) {
+    imageFile = file;
+    const reader = new FileReader();
+    reader.onload = (ev) => {
+      const dz = document.getElementById('dropZone');
+      const ph = document.getElementById('dropPlaceholder');
+      ph.style.display = 'none';
+      let img = dz.querySelector('img');
+      if (!img) { img = document.createElement('img'); dz.appendChild(img); }
+      img.src = ev.target.result;
+      let hint = dz.querySelector('.change-hint');
+      if (!hint) { hint = document.createElement('div'); hint.className = 'change-hint'; hint.textContent = 'click to change'; dz.appendChild(hint); }
+    };
+    reader.readAsDataURL(file);
+    resetFields();
+    setScanReady(true);
+    setSaveReady(false);
+    clearAlert();
+  }
+
+  // ── VOICE ──────────────────────────────────────────────
+  function toggleRecording() {
+    if (recording) stopRecording();
+    else startRecording();
+  }
+
+  function startRecording() {
+    const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
+    if (!SR) { alert('Voice recording requires Chrome browser.'); return; }
+    finalTranscript = document.getElementById('voiceArea').value;
+    recognition = new SR();
+    recognition.continuous = true;
+    recognition.interimResults = true;
+    recognition.lang = 'en-US';
+    recognition.onresult = (e) => {
+      let interim = '';
+      for (let i = e.resultIndex; i < e.results.length; i++) {
+        if (e.results[i].isFinal) finalTranscript += e.results[i][0].transcript + ' ';
+        else interim += e.results[i][0].transcript;
+      }
+      document.getElementById('voiceArea').value = finalTranscript + interim;
+      document.getElementById('voiceArea').classList.add('listening');
+    };
+    recognition.onend = () => {
+      document.getElementById('voiceArea').value = finalTranscript;
+      document.getElementById('voiceArea').classList.remove('listening');
+      setRecordingState(false);
+    };
+    recognition.onerror = () => setRecordingState(false);
+    recognition.start();
+    setRecordingState(true);
+  }
+
+  function stopRecording() {
+    recognition && recognition.stop();
+    setRecordingState(false);
+  }
+
+  function setRecordingState(on) {
+    recording = on;
+    const btn = document.getElementById('recBtn');
+    clearInterval(pulseTimer);
+    if (on) {
+      btn.textContent = '⏹ STOP';
+      btn.classList.add('active');
+      let p = false;
+      pulseTimer = setInterval(() => { btn.classList.toggle('pulse', (p = !p)); }, 600);
+    } else {
+      btn.textContent = '⏺ RECORD';
+      btn.classList.remove('active', 'pulse');
+    }
+  }
+
+  // ── SCAN ───────────────────────────────────────────────
+  async function scanCard() {
+    if (!imageFile) return;
+
+    setScanReady(false);
+    setSaveReady(false);
+    clearAlert();
+
+    const scanBtn = document.getElementById('scanBtn');
+    scanBtn.className = 'scan-btn scanning';
+    scanBtn.innerHTML = '<span class="spin">⟳</span> SCANNING WITH AI...';
+
+    try {
+      const b64 = await toBase64(imageFile);
+      const res = await fetch('/.netlify/functions/scan', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          model: 'claude-sonnet-4-20250514',
+          max_tokens: 1000,
+          messages: [{
+            role: 'user',
+            content: [
+              { type: 'image', source: { type: 'base64', media_type: imageFile.type, data: b64 } },
+              { type: 'text', text: 'Extract name, company, email, and phone number from this business card image. Return ONLY a JSON object with no markdown or extra text, like: {"name":"","company":"","email":"","phone":""}. Use empty string for any field not found.' }
+            ]
+          }]
+        })
+      });
+      const data = await res.json();
+
+      if (!res.ok || data.error) {
+        throw new Error(data.error?.message || 'HTTP ' + res.status + ': ' + JSON.stringify(data));
+      }
+
+      const raw = (data.content || []).map(c => c.text || '').join('');
+      const clean = raw.replace(/```json|```/g, '').trim();
+      const parsed = JSON.parse(clean);
+
+      document.getElementById('fName').value = parsed.name || '';
+      document.getElementById('fCompany').value = parsed.company || '';
+      document.getElementById('fEmail').value = parsed.email || '';
+      document.getElementById('fPhone').value = parsed.phone || '';
+      document.getElementById('fNotes').value = document.getElementById('voiceArea').value;
+
+      scanDone = true;
+      setScanReady(true);
+      setSaveReady(true);
+      scanBtn.className = 'scan-btn ready';
+      scanBtn.textContent = '⚡ SCAN AGAIN';
+
+    } catch (err) {
+      scanBtn.className = 'scan-btn ready';
+      scanBtn.textContent = '⚡ SCAN WITH AI';
+      setScanReady(true);
+      showAlert('error', '⚠ ' + (err.message || 'Unknown error. Check API key and internet connection.'));
+    }
+  }
+
+  // ── SAVE ───────────────────────────────────────────────
+  async function saveToSheets() {
+    if (!scanDone) return;
+    if (!gAccessToken) { showAlert('error', '⚠ Please connect your Google account first — click "Connect Sheets" above.'); toggleGooglePanel(); return; }
+
+    const saveBtn = document.getElementById('saveBtn');
+    saveBtn.className = 'save-btn disabled';
+    saveBtn.textContent = '⟳ SAVING...';
+    clearAlert();
+
+    const row = [
+      document.getElementById('fName').value,
+      document.getElementById('fCompany').value,
+      document.getElementById('fEmail').value,
+      '-' + document.getElementById('fPhone').value,
+      document.getElementById('fNotes').value,
+      new Date().toLocaleString()
+    ];
+
+    try {
+      await appendToSheet([row]);
+      savedCount++;
+      document.getElementById('savedBadge').textContent = savedCount + ' saved today';
+      showAlert('success', '✓ Saved to Google Sheets!');
+      addLogRow({ name: row[0], company: row[1], email: row[2], phone: row[3], notes: row[4] });
+      setTimeout(() => { resetAll(); }, 2200);
+    } catch(err) {
+      // Token may have expired — clear and re-prompt
+      if (err.message && err.message.includes('401')) {
+        gAccessToken = ''; localStorage.removeItem('cardsheet_gtoken');
+        updateGoogleUI();
+        showAlert('error', '⚠ Google session expired. Please reconnect via "Connect Sheets".');
+      } else {
+        showAlert('error', '⚠ Could not save: ' + err.message);
+      }
+      saveBtn.className = 'save-btn ready';
+      saveBtn.textContent = '📊 SAVE TO GOOGLE SHEETS';
+    }
+  }
+
+  // ── LOG ────────────────────────────────────────────────
+  function addLogRow(d) {
+    const logSection = document.getElementById('logSection');
+    logSection.classList.add('visible');
+    document.getElementById('logTitle').textContent = `SESSION LOG — ${savedCount} CONTACT${savedCount !== 1 ? 'S' : ''} SAVED`;
+    const row = document.createElement('div');
+    row.className = 'log-row';
+    const t = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+    row.innerHTML = `<span class="name">${d.name || '—'}</span><span>${d.company || '—'}</span><span class="email">${d.email || '—'}</span><span>${d.phone || '—'}</span><span class="time">${t}</span>`;
+    document.getElementById('logRows').prepend(row);
+  }
+
+  // ── HELPERS ────────────────────────────────────────────
+  function toBase64(file) {
+    return new Promise((res, rej) => {
+      const r = new FileReader();
+      r.onload = () => res(r.result.split(',')[1]);
+      r.onerror = rej;
+      r.readAsDataURL(file);
+    });
+  }
+
+  function setScanReady(on) {
+    const btn = document.getElementById('scanBtn');
+    if (on && imageFile) { btn.className = 'scan-btn ready'; btn.textContent = '⚡ SCAN WITH AI'; }
+    else if (!on && btn.className !== 'scan-btn scanning') { btn.className = 'scan-btn disabled'; btn.textContent = '⚡ SCAN WITH AI'; }
+  }
+
+  function setSaveReady(on) {
+    const btn = document.getElementById('saveBtn');
+    if (on) { btn.className = 'save-btn ready'; btn.textContent = '📊 SAVE TO GOOGLE SHEETS'; }
+    else { btn.className = 'save-btn disabled'; btn.textContent = '📊 SAVE TO GOOGLE SHEETS'; }
+  }
+
+  function showAlert(type, msg) {
+    const box = document.getElementById('alertBox');
+    box.innerHTML = `<div class="alert ${type}">${msg}</div>`;
+  }
+  function clearAlert() { document.getElementById('alertBox').innerHTML = ''; }
+
+  function resetFields() {
+    ['fName','fCompany','fEmail','fPhone','fNotes'].forEach(id => document.getElementById(id).value = '');
+    scanDone = false;
+  }
+
+  function resetAll() {
+    resetFields();
+    imageFile = null;
+    scanDone = false;
+    const dz = document.getElementById('dropZone');
+    const img = dz.querySelector('img');
+    if (img) img.remove();
+    const hint = dz.querySelector('.change-hint');
+    if (hint) hint.remove();
+    document.getElementById('dropPlaceholder').style.display = '';
+    document.getElementById('voiceArea').value = '';
+    finalTranscript = '';
+    clearAlert();
+    setScanReady(false);
+    setSaveReady(false);
+  }
+</script>
+</body>
+</html>
