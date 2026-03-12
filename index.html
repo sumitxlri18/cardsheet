@@ -674,15 +674,22 @@ textarea.field-input { resize: vertical; min-height: 72px; line-height: 1.55; }
   }
 
   // ── GOOGLE AUTH ────────────────────────────────────────
+  let _tokenResolve = null;
+
   function initGoogleAuth() {
     if (!window.google || GOOGLE_CLIENT_ID === 'YOUR_GOOGLE_CLIENT_ID') return;
     tokenClient = google.accounts.oauth2.initTokenClient({
       client_id: GOOGLE_CLIENT_ID,
       scope: SCOPES,
       callback: async (resp) => {
-        if (resp.error) { showAlert('error', '⚠ Google sign-in failed: ' + resp.error); return; }
+        if (resp.error) {
+          if (_tokenResolve) { _tokenResolve(null); _tokenResolve = null; }
+          showAlert('error', 'Google sign-in failed: ' + resp.error);
+          return;
+        }
         gAccessToken = resp.access_token;
         localStorage.setItem('cardsheet_gtoken', gAccessToken);
+        if (_tokenResolve) { _tokenResolve(gAccessToken); _tokenResolve = null; return; }
         // Fetch user profile
         try {
           const r = await fetch('https://www.googleapis.com/oauth2/v3/userinfo', {
@@ -710,6 +717,15 @@ textarea.field-input { resize: vertical; min-height: 72px; line-height: 1.55; }
     gAccessToken = ''; spreadsheetId = ''; gUserName = ''; gUserEmail = ''; gUserAvatar = '';
     ['cardsheet_gtoken','cardsheet_sheetid','cardsheet_gname','cardsheet_gemail','cardsheet_gavatar'].forEach(k => localStorage.removeItem(k));
     updateGoogleUI();
+  }
+
+  // Always get a fresh token — never rely on stored one which may be expired
+  function getFreshToken() {
+    return new Promise((resolve) => {
+      if (!tokenClient) { resolve(null); return; }
+      _tokenResolve = resolve;
+      tokenClient.requestAccessToken({ prompt: '' });
+    });
   }
 
   function updateGoogleUI() {
@@ -910,7 +926,7 @@ textarea.field-input { resize: vertical; min-height: 72px; line-height: 1.55; }
   // ── SAVE ───────────────────────────────────────────────
   async function saveToSheets() {
     // Must be connected to Google
-    if (!gAccessToken) {
+    if (!gAccessToken && !localStorage.getItem('cardsheet_gname')) {
       showAlert('error', 'Connect your Google account first — click "Connect Sheets" in the top right.');
       toggleGooglePanel();
       return;
@@ -921,6 +937,14 @@ textarea.field-input { resize: vertical; min-height: 72px; line-height: 1.55; }
       showAlert('error', 'Please fill in at least one field before saving.');
       return;
     }
+    // Always refresh the token before saving (tokens expire after 1 hour)
+    const freshToken = await getFreshToken();
+    if (!freshToken) {
+      showAlert('error', 'Could not refresh Google session. Please reconnect via "Connect Sheets".');
+      updateGoogleUI();
+      return;
+    }
+    gAccessToken = freshToken;
 
     const saveBtn = document.getElementById('saveBtn');
     saveBtn.className = 'save-btn disabled';
@@ -945,13 +969,7 @@ textarea.field-input { resize: vertical; min-height: 72px; line-height: 1.55; }
       setTimeout(() => { resetAll(); }, 2200);
     } catch(err) {
       // Token may have expired — clear and re-prompt
-      if (err.message && err.message.includes('401')) {
-        gAccessToken = ''; localStorage.removeItem('cardsheet_gtoken');
-        updateGoogleUI();
-        showAlert('error', 'Google session expired. Please reconnect via "Connect Sheets".');
-      } else {
-        showAlert('error', 'Could not save: ' + err.message);
-      }
+      showAlert('error', 'Could not save: ' + err.message);
       saveBtn.className = 'save-btn ready';
       saveBtn.innerHTML = 'Save to Google Sheets';
     }
