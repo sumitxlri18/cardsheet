@@ -909,7 +909,18 @@ textarea.field-input { resize: vertical; min-height: 72px; line-height: 1.55; }
 
   // ── SAVE ───────────────────────────────────────────────
   async function saveToSheets() {
-    if (!gAccessToken) { showAlert('error', '⚠ Please connect your Google account first — click "Connect Sheets" above.'); toggleGooglePanel(); return; }
+    // Must be connected to Google
+    if (!gAccessToken) {
+      showAlert('error', 'Connect your Google account first — click "Connect Sheets" in the top right.');
+      toggleGooglePanel();
+      return;
+    }
+    // Must have at least some data to save
+    const hasData = ['fName','fCompany','fEmail','fPhone'].some(id => document.getElementById(id).value.trim());
+    if (!hasData) {
+      showAlert('error', 'Please fill in at least one field before saving.');
+      return;
+    }
 
     const saveBtn = document.getElementById('saveBtn');
     saveBtn.className = 'save-btn disabled';
