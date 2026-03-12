@@ -2,348 +2,627 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<meta name="theme-color" content="#0c0c14">
+<meta name="theme-color" content="#ffffff">
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-capable" content="yes">
-<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-<meta name="apple-mobile-web-app-title" content="Card→Sheet">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="apple-mobile-web-app-title" content="CardScan">
 <link rel="manifest" href="data:application/json,{
-  &quot;name&quot;: &quot;Card→Sheet&quot;,
-  &quot;short_name&quot;: &quot;CardSheet&quot;,
+  &quot;name&quot;: &quot;CardScan&quot;,
+  &quot;short_name&quot;: &quot;CardScan&quot;,
   &quot;start_url&quot;: &quot;.&quot;,
   &quot;display&quot;: &quot;standalone&quot;,
-  &quot;background_color&quot;: &quot;#0c0c14&quot;,
-  &quot;theme_color&quot;: &quot;#0c0c14&quot;,
+  &quot;background_color&quot;: &quot;#ffffff&quot;,
+  &quot;theme_color&quot;: &quot;#2563EB&quot;,
   &quot;orientation&quot;: &quot;portrait&quot;,
   &quot;icons&quot;: [{
-    &quot;src&quot;: &quot;data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><rect width='100' height='100' rx='20' fill='%230c0c14'/><text y='.9em' font-size='80' x='10'>🪪</text></svg>&quot;,
+    &quot;src&quot;: &quot;data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><rect width='100' height='100' rx='22' fill='%232563EB'/><text y='.88em' font-size='72' x='14'>🪪</text></svg>&quot;,
     &quot;sizes&quot;: &quot;any&quot;,
     &quot;type&quot;: &quot;image/svg+xml&quot;
   }]
 }">
-
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Card→Sheet | Business Card Scanner</title>
-<link href="https://fonts.googleapis.com/css2?family=Syne:wght@700;800&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
-<style>
-  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
-  :root {
-    --bg: #0c0c14;
-    --surface: #13131f;
-    --card: #1a1a2e;
-    --border: #2a2a40;
-    --accent: #f59e0b;
-    --accent2: #fb923c;
-    --green: #22c55e;
-    --red: #ef4444;
-    --text: #e2e8f0;
-    --muted: #64748b;
-    --mono: 'Space Mono', monospace;
-    --display: 'Syne', sans-serif;
-  }
-  body {
-    background: var(--bg);
-    color: var(--text);
-    font-family: var(--mono);
-    min-height: 100vh;
-    padding: 28px 20px 60px;
-  }
-  /* scrollbar */
-  ::-webkit-scrollbar { width: 5px; }
-  ::-webkit-scrollbar-track { background: transparent; }
-  ::-webkit-scrollbar-thumb { background: #2a2a40; border-radius: 4px; }
-
-  /* HEADER */
-  .header {
-    max-width: 860px;
-    margin: 0 auto 28px;
-    display: flex;
-    justify-content: space-between;
-    align-items: flex-end;
-    flex-wrap: wrap;
-    gap: 14px;
-  }
-  .logo { font-family: var(--display); font-size: 32px; font-weight: 800; letter-spacing: -1px; }
-  .logo span { color: var(--accent); }
-  .tagline { font-size: 10px; color: var(--muted); letter-spacing: 3px; margin-top: 3px; }
-  .header-actions { display: flex; gap: 10px; align-items: center; }
-  .badge { background: rgba(245,158,11,0.1); border: 1px solid rgba(245,158,11,0.25); border-radius: 20px; padding: 5px 14px; font-size: 11px; color: var(--accent); letter-spacing: 1px; }
-  .setup-btn {
-    background: var(--card); border: 1px solid var(--border); border-radius: 8px;
-    padding: 7px 16px; color: var(--muted); font-size: 11px; cursor: pointer;
-    font-family: var(--mono); letter-spacing: 1px; transition: all .2s;
-  }
-  .setup-btn:hover { border-color: var(--accent); color: var(--accent); }
-
-  /* SETUP PANEL */
-  .setup-panel {
-    max-width: 860px; margin: 0 auto 20px;
-    background: rgba(245,158,11,0.04);
-    border: 1px solid rgba(245,158,11,0.2);
-    border-radius: 14px; padding: 22px;
-    display: none;
-  }
-  .setup-panel.open { display: block; animation: fadeUp .2s ease; }
-  .setup-title { font-size: 10px; color: var(--accent); letter-spacing: 3px; margin-bottom: 14px; }
-  .setup-steps { font-size: 12px; color: var(--muted); line-height: 2; margin-bottom: 14px; }
-  .setup-steps b { color: var(--text); }
-  .code-block {
-    background: var(--bg); border-radius: 10px; padding: 16px;
-    font-size: 11px; color: #7c8aa0; line-height: 1.8;
-    margin-bottom: 14px; overflow-x: auto; white-space: pre;
-    border: 1px solid var(--border);
-  }
-  .url-input {
-    width: 100%; background: var(--bg); border: 1px solid rgba(245,158,11,0.3);
-    border-radius: 8px; color: var(--text); padding: 11px 14px;
-    font-size: 12px; font-family: var(--mono); outline: none; margin-bottom: 12px;
-    transition: border-color .2s;
-  }
-  .url-input:focus { border-color: var(--accent); }
-  .save-setup-btn {
-    background: var(--accent); border: none; border-radius: 8px; padding: 10px 22px;
-    color: #0c0c14; font-weight: 700; font-family: var(--mono); font-size: 11px;
-    letter-spacing: 1px; cursor: pointer; transition: background .2s;
-  }
-  .save-setup-btn:hover { background: #d97706; }
-
-  /* MAIN GRID */
-  .main { max-width: 860px; margin: 0 auto; display: grid; grid-template-columns: 1fr 1fr; gap: 18px; }
-  @media (max-width: 640px) { .main { grid-template-columns: 1fr; } }
-
-  /* LEFT COLUMN */
-  .left { display: flex; flex-direction: column; gap: 14px; }
-
-  /* DROP ZONE */
-  .drop-zone {
-    border: 2px dashed var(--border); border-radius: 14px;
-    background: var(--surface); cursor: pointer;
-    min-height: 210px; display: flex; align-items: center; justify-content: center;
-    overflow: hidden; transition: all .25s; position: relative;
-  }
-  .drop-zone:hover, .drop-zone.dragover { border-color: var(--accent); background: rgba(245,158,11,0.05); }
-  .drop-zone img { width: 100%; height: 210px; object-fit: contain; padding: 10px; }
-  .drop-placeholder { text-align: center; padding: 24px; pointer-events: none; }
-  .drop-icon { font-size: 38px; margin-bottom: 12px; }
-  .drop-label { color: var(--accent); font-size: 11px; letter-spacing: 3px; }
-  .drop-sub { color: var(--muted); font-size: 10px; margin-top: 6px; }
-  .change-hint {
-    position: absolute; bottom: 8px; right: 10px;
-    font-size: 10px; color: var(--muted); letter-spacing: 1px;
-  }
-
-  /* VOICE */
-  .voice-box {
-    background: var(--card); border: 1px solid var(--border);
-    border-radius: 12px; padding: 16px;
-  }
-  .voice-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; }
-  .section-label { font-size: 10px; color: var(--accent); letter-spacing: 3px; }
-  .rec-btn {
-    border-radius: 20px; padding: 5px 14px; font-size: 10px;
-    font-family: var(--mono); letter-spacing: 1px; cursor: pointer;
-    transition: all .15s; border: 1px solid rgba(239,68,68,0.3);
-    background: rgba(239,68,68,0.08); color: var(--red);
-  }
-  .rec-btn.active { background: var(--red); color: #fff; border-color: var(--red); }
-  .rec-btn.pulse { background: #b91c1c; }
-  textarea.voice-area {
-    width: 100%; background: var(--bg); border: 1px solid var(--border);
-    border-radius: 8px; color: var(--text); padding: 10px 12px;
-    font-size: 12px; font-family: var(--mono); resize: vertical;
-    line-height: 1.7; outline: none; min-height: 80px;
-    transition: border-color .2s, color .2s;
-  }
-  textarea.voice-area:focus { border-color: var(--accent); }
-  textarea.voice-area.listening { color: #86efac; border-color: rgba(34,197,94,0.4); }
-
-  /* SCAN BUTTON */
-  .scan-btn {
-    border: none; border-radius: 12px; padding: 15px;
-    font-family: var(--display); font-size: 14px; font-weight: 800;
-    letter-spacing: 3px; cursor: pointer; transition: all .2s;
-    display: flex; align-items: center; justify-content: center; gap: 10px;
-  }
-  .scan-btn.ready { background: var(--accent); color: #0c0c14; }
-  .scan-btn.ready:hover { background: #d97706; transform: translateY(-1px); }
-  .scan-btn.disabled { background: var(--card); color: var(--muted); cursor: not-allowed; border: 1px solid var(--border); }
-  .scan-btn.scanning { background: rgba(245,158,11,0.15); color: var(--accent); cursor: default; border: 1px solid rgba(245,158,11,0.3); }
-  .spin { display: inline-block; animation: spin .7s linear infinite; }
-
-  /* RIGHT COLUMN */
-  .right {
-    background: var(--card); border: 1px solid var(--border);
-    border-radius: 14px; padding: 20px; display: flex; flex-direction: column; gap: 0;
-  }
-  .field-label { font-size: 10px; color: var(--accent); letter-spacing: 3px; margin-bottom: 5px; }
-  .field-wrap { margin-bottom: 13px; }
-  .field-input {
-    width: 100%; background: var(--surface); border: 1px solid var(--border);
-    border-radius: 8px; color: var(--text); padding: 9px 13px;
-    font-size: 13px; font-family: var(--mono); outline: none; transition: border-color .2s;
-  }
-  .field-input:focus { border-color: var(--accent); }
-  textarea.field-input { resize: vertical; min-height: 70px; line-height: 1.6; }
-  .fields { flex: 1; }
-
-  /* ALERTS */
-  .alert { border-radius: 8px; padding: 11px 14px; font-size: 11px; margin-bottom: 12px; }
-  .alert.error { background: rgba(239,68,68,0.08); border: 1px solid rgba(239,68,68,0.25); color: #fca5a5; }
-  .alert.success { background: rgba(34,197,94,0.08); border: 1px solid rgba(34,197,94,0.25); color: #86efac; text-align: center; animation: pop .4s ease; }
-
-  /* SAVE BUTTON */
-  .save-btn {
-    border: none; border-radius: 12px; padding: 15px;
-    font-family: var(--display); font-size: 14px; font-weight: 800;
-    letter-spacing: 3px; cursor: pointer; transition: all .2s; width: 100%; margin-top: 8px;
-  }
-  .save-btn.ready { background: var(--green); color: #fff; }
-  .save-btn.ready:hover { background: #16a34a; transform: translateY(-1px); }
-  .save-btn.disabled { background: var(--surface); color: var(--muted); cursor: not-allowed; border: 1px solid var(--border); }
-
-  /* SESSION LOG */
-  .log-section {
-    max-width: 860px; margin: 18px auto 0;
-    background: var(--card); border: 1px solid var(--border);
-    border-radius: 14px; padding: 20px; display: none;
-  }
-  .log-section.visible { display: block; animation: fadeUp .3s ease; }
-  .log-row {
-    display: grid; grid-template-columns: 1fr 1fr 1.5fr 1fr 55px;
-    gap: 10px; background: var(--surface); border-radius: 8px;
-    padding: 9px 13px; font-size: 11px; color: var(--muted);
-    margin-bottom: 6px; align-items: center;
-  }
-  .log-row .name { color: var(--text); font-weight: 700; }
-  .log-row .email { color: #60a5fa; }
-  .log-row .time { color: #3f4f63; font-size: 10px; }
-
-  /* KEYFRAMES */
-
-  /* MOBILE */
-  @media (max-width: 480px) {
-    body { padding: 16px 12px 80px; }
-    .main { grid-template-columns: 1fr !important; }
-    .logo { font-size: 26px; }
-    .drop-zone { min-height: 180px; }
-    .scan-btn, .save-btn { padding: 18px; font-size: 15px; }
-    .field-input { font-size: 16px !important; padding: 12px 14px !important; }
-  }
-
-  @keyframes spin { to { transform: rotate(360deg); } }
-  @keyframes fadeUp { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }
-  @keyframes pop { 0%,100% { transform: scale(1); } 50% { transform: scale(1.03); } }
-</style>
+<title>CardScan — AI Business Card Scanner</title>
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:ital,wght@0,400;0,500;0,600;0,700;0,800&display=swap" rel="stylesheet">
 <script src="https://accounts.google.com/gsi/client" async defer></script>
 <script src="https://apis.google.com/js/api.js"></script>
+
+<style>
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+:root {
+  --bg:        #F1F5F9;
+  --surface:   #FFFFFF;
+  --panel:     #F8FAFC;
+  --border:    #E2E8F0;
+  --border-2:  #CBD5E1;
+  --text:      #0F172A;
+  --text-2:    #475569;
+  --text-3:    #94A3B8;
+  --blue:      #2563EB;
+  --blue-2:    #1D4ED8;
+  --blue-bg:   #EFF6FF;
+  --blue-bd:   #BFDBFE;
+  --green:     #059669;
+  --green-bg:  #ECFDF5;
+  --green-bd:  #6EE7B7;
+  --red:       #DC2626;
+  --red-bg:    #FEF2F2;
+  --red-bd:    #FECACA;
+  --amber:     #D97706;
+  --font:      'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, sans-serif;
+  --sh-xs:     0 1px 2px rgba(0,0,0,.05);
+  --sh-sm:     0 2px 8px rgba(0,0,0,.06), 0 1px 3px rgba(0,0,0,.04);
+  --sh-md:     0 4px 20px rgba(0,0,0,.08), 0 2px 6px rgba(0,0,0,.04);
+  --sh-lg:     0 12px 40px rgba(0,0,0,.10), 0 4px 12px rgba(0,0,0,.05);
+  --r:         12px;
+  --r-sm:      8px;
+  --r-xs:      6px;
+}
+
+html { scroll-behavior: smooth; }
+
+body {
+  background: var(--bg);
+  color: var(--text);
+  font-family: var(--font);
+  min-height: 100vh;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+::-webkit-scrollbar { width: 6px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: var(--border-2); border-radius: 10px; }
+
+/* ─── NAV ────────────────────────────────────────────── */
+.nav {
+  position: sticky; top: 0; z-index: 200;
+  height: 58px;
+  background: rgba(255,255,255,0.85);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border-bottom: 1px solid var(--border);
+  padding: 0 28px;
+  display: flex; align-items: center; justify-content: space-between;
+  box-shadow: var(--sh-xs);
+}
+.nav-left { display: flex; align-items: center; gap: 10px; }
+.nav-logo-icon {
+  width: 32px; height: 32px; border-radius: 8px; flex-shrink: 0;
+  background: linear-gradient(135deg, #2563EB 0%, #7C3AED 100%);
+  display: flex; align-items: center; justify-content: center;
+  font-size: 15px;
+  box-shadow: 0 2px 8px rgba(37,99,235,0.30);
+}
+.nav-name { font-size: 16px; font-weight: 800; color: var(--text); letter-spacing: -0.3px; }
+.nav-right { display: flex; align-items: center; gap: 8px; }
+
+/* ─── BADGE ──────────────────────────────────────────── */
+.count-badge {
+  display: flex; align-items: center; gap: 5px;
+  padding: 4px 12px; border-radius: 20px;
+  background: var(--blue-bg); border: 1px solid var(--blue-bd);
+  font-size: 12px; font-weight: 600; color: var(--blue);
+}
+.count-dot {
+  width: 6px; height: 6px; border-radius: 50%; background: var(--blue);
+}
+
+/* ─── NAV BUTTON ─────────────────────────────────────── */
+.nav-btn {
+  display: flex; align-items: center; gap: 7px;
+  padding: 6px 14px; border-radius: 8px;
+  font-family: var(--font); font-size: 13px; font-weight: 600;
+  cursor: pointer; border: 1.5px solid var(--border);
+  background: var(--surface); color: var(--text-2);
+  box-shadow: var(--sh-xs); transition: all .16s ease;
+  white-space: nowrap;
+}
+.nav-btn:hover { border-color: var(--border-2); color: var(--text); box-shadow: var(--sh-sm); }
+.nav-btn.google { border-color: var(--blue-bd); background: var(--blue-bg); color: var(--blue); }
+.nav-btn.google:hover { background: #DBEAFE; border-color: #93C5FD; }
+.nav-btn.google.connected { border-color: var(--green-bd); background: var(--green-bg); color: var(--green); }
+.nav-btn.google.connected:hover { background: #D1FAE5; }
+.nav-btn svg { width: 14px; height: 14px; flex-shrink: 0; }
+
+/* ─── PANEL OVERLAY ──────────────────────────────────── */
+.panel-backdrop {
+  display: none; position: fixed; inset: 0; z-index: 150;
+  background: rgba(15,23,42,0.25);
+  backdrop-filter: blur(2px);
+  animation: fadeIn .18s ease;
+}
+.panel-backdrop.open { display: block; }
+
+.slide-panel {
+  display: none; position: fixed;
+  top: 58px; right: 0; bottom: 0;
+  width: min(420px, 100vw); z-index: 160;
+  background: var(--surface);
+  border-left: 1px solid var(--border);
+  box-shadow: var(--sh-lg);
+  overflow-y: auto;
+  padding: 28px 24px 40px;
+  animation: slideIn .22s cubic-bezier(.4,0,.2,1);
+}
+.slide-panel.open { display: block; }
+
+@keyframes slideIn { from { transform: translateX(100%); opacity: 0; } to { transform: translateX(0); opacity: 1; } }
+@keyframes fadeIn  { from { opacity: 0; } to { opacity: 1; } }
+
+.panel-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 22px; }
+.panel-title { font-size: 16px; font-weight: 700; color: var(--text); }
+.panel-close {
+  width: 30px; height: 30px; border-radius: 6px;
+  border: 1px solid var(--border); background: transparent;
+  cursor: pointer; display: flex; align-items: center; justify-content: center;
+  color: var(--text-3); font-size: 16px; transition: all .15s;
+}
+.panel-close:hover { background: var(--panel); color: var(--text); }
+
+.panel-label { font-size: 11px; font-weight: 700; color: var(--text-3); letter-spacing: .7px; text-transform: uppercase; margin-bottom: 6px; }
+.panel-input {
+  width: 100%; background: var(--panel); border: 1.5px solid var(--border);
+  border-radius: var(--r-sm); color: var(--text); padding: 10px 13px;
+  font-size: 14px; font-family: var(--font); font-weight: 500;
+  outline: none; transition: border-color .16s, box-shadow .16s;
+  margin-bottom: 16px;
+}
+.panel-input:focus { border-color: var(--blue); box-shadow: 0 0 0 3px rgba(37,99,235,0.10); }
+.panel-input::placeholder { color: var(--text-3); font-weight: 400; }
+
+.panel-divider { height: 1px; background: var(--border); margin: 20px 0; }
+.panel-hint { font-size: 12px; color: var(--text-3); line-height: 1.6; margin-bottom: 14px; }
+.panel-hint b { color: var(--text-2); font-weight: 600; }
+
+/* Google Sign-In btn inside panel */
+.google-signin-btn {
+  display: flex; align-items: center; justify-content: center; gap: 10px;
+  width: 100%; padding: 11px 18px; border-radius: var(--r-sm);
+  background: var(--blue); border: none; cursor: pointer;
+  color: #fff; font-family: var(--font); font-size: 14px; font-weight: 600;
+  box-shadow: 0 2px 10px rgba(37,99,235,0.30); transition: all .18s;
+}
+.google-signin-btn:hover { background: var(--blue-2); box-shadow: 0 4px 16px rgba(37,99,235,0.35); transform: translateY(-1px); }
+.google-signin-btn svg { width: 18px; height: 18px; flex-shrink: 0; }
+
+.connected-card {
+  display: flex; align-items: center; gap: 12px;
+  background: var(--green-bg); border: 1px solid var(--green-bd);
+  border-radius: var(--r-sm); padding: 12px 14px; margin-bottom: 18px;
+}
+.connected-avatar {
+  width: 38px; height: 38px; border-radius: 50%;
+  border: 2px solid #A7F3D0; object-fit: cover; flex-shrink: 0;
+}
+.connected-name { font-size: 14px; font-weight: 700; color: var(--text); }
+.connected-email { font-size: 12px; color: var(--text-2); margin-top: 1px; }
+.connected-tick {
+  margin-left: auto; background: var(--green); color: #fff;
+  border-radius: 20px; padding: 3px 10px; font-size: 11px; font-weight: 700;
+  flex-shrink: 0;
+}
+
+.signout-btn {
+  background: transparent; border: 1.5px solid var(--border);
+  border-radius: var(--r-xs); padding: 8px 16px;
+  color: var(--text-3); font-family: var(--font); font-size: 13px;
+  font-weight: 500; cursor: pointer; transition: all .15s;
+}
+.signout-btn:hover { border-color: var(--red-bd); color: var(--red); background: var(--red-bg); }
+
+.panel-save-btn {
+  width: 100%; padding: 11px; border-radius: var(--r-sm);
+  background: var(--blue); border: none; color: #fff;
+  font-family: var(--font); font-size: 14px; font-weight: 700;
+  cursor: pointer; transition: all .18s; box-shadow: 0 2px 8px rgba(37,99,235,0.25);
+}
+.panel-save-btn:hover { background: var(--blue-2); transform: translateY(-1px); }
+
+/* ─── PAGE WRAPPER ───────────────────────────────────── */
+.page { max-width: 920px; margin: 0 auto; padding: 28px 20px 60px; }
+
+/* ─── HERO STRIP ─────────────────────────────────────── */
+.hero {
+  background: linear-gradient(135deg, #2563EB 0%, #7C3AED 100%);
+  border-radius: 16px; padding: 22px 28px;
+  display: flex; align-items: center; justify-content: space-between;
+  margin-bottom: 24px; gap: 16px;
+  box-shadow: 0 4px 24px rgba(37,99,235,0.25);
+}
+.hero-text h1 { font-size: 20px; font-weight: 800; color: #fff; letter-spacing: -0.4px; }
+.hero-text p { font-size: 13px; color: rgba(255,255,255,0.75); margin-top: 4px; font-weight: 400; }
+.hero-steps { display: flex; gap: 8px; flex-wrap: wrap; }
+.hero-step {
+  display: flex; align-items: center; gap: 6px;
+  background: rgba(255,255,255,0.15); border-radius: 20px;
+  padding: 5px 13px; font-size: 12px; font-weight: 600; color: rgba(255,255,255,0.9);
+}
+.hero-step-num {
+  width: 18px; height: 18px; border-radius: 50%;
+  background: rgba(255,255,255,0.25); display: flex; align-items: center;
+  justify-content: center; font-size: 10px; font-weight: 800; color: #fff;
+  flex-shrink: 0;
+}
+
+/* ─── MAIN GRID ──────────────────────────────────────── */
+.main { display: grid; grid-template-columns: 1fr 1fr; gap: 18px; }
+
+/* ─── CARD ───────────────────────────────────────────── */
+.card {
+  background: var(--surface); border-radius: 16px;
+  border: 1px solid var(--border); box-shadow: var(--sh-sm);
+  overflow: hidden;
+}
+.card-header {
+  padding: 16px 20px 0;
+  display: flex; align-items: center; justify-content: space-between;
+}
+.card-title { font-size: 13px; font-weight: 700; color: var(--text-2); letter-spacing: .1px; }
+.card-body { padding: 14px 20px 20px; }
+
+/* ─── DROP ZONE ──────────────────────────────────────── */
+.drop-zone {
+  border: 2px dashed var(--border); border-radius: var(--r);
+  background: var(--panel); cursor: pointer;
+  min-height: 200px; display: flex; align-items: center; justify-content: center;
+  overflow: hidden; transition: all .2s; position: relative;
+}
+.drop-zone:hover { border-color: var(--blue); background: var(--blue-bg); }
+.drop-zone.dragover { border-color: var(--blue); background: var(--blue-bg); box-shadow: 0 0 0 4px rgba(37,99,235,0.08); }
+.drop-zone img { width: 100%; height: 200px; object-fit: contain; padding: 12px; }
+.drop-placeholder { text-align: center; padding: 28px 20px; pointer-events: none; }
+.drop-icon-wrap {
+  width: 56px; height: 56px; border-radius: 14px;
+  background: linear-gradient(135deg, #EFF6FF, #F5F3FF);
+  border: 1px solid #DBEAFE;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 26px; margin: 0 auto 14px;
+}
+.drop-label { font-size: 14px; font-weight: 700; color: var(--text); margin-bottom: 4px; }
+.drop-sub { font-size: 12px; color: var(--text-3); font-weight: 400; }
+.drop-sub span { color: var(--blue); font-weight: 600; }
+.change-hint {
+  position: absolute; bottom: 8px; right: 10px;
+  font-size: 11px; color: var(--text-3); font-weight: 500;
+  background: var(--surface); border: 1px solid var(--border);
+  border-radius: 4px; padding: 2px 7px;
+}
+
+/* ─── VOICE BOX ──────────────────────────────────────── */
+.voice-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; }
+.rec-btn {
+  display: flex; align-items: center; gap: 6px;
+  border-radius: 20px; padding: 5px 13px; font-size: 12px; font-weight: 600;
+  font-family: var(--font); cursor: pointer; transition: all .15s;
+  border: 1.5px solid #FECACA; background: var(--red-bg); color: var(--red);
+}
+.rec-btn:hover { background: #FEE2E2; }
+.rec-btn.active { background: var(--red); color: #fff; border-color: var(--red); }
+.rec-btn.pulse { background: #B91C1C; border-color: #B91C1C; }
+.rec-dot { width: 7px; height: 7px; border-radius: 50%; background: currentColor; flex-shrink: 0; }
+
+textarea.voice-area {
+  width: 100%; background: var(--panel); border: 1.5px solid var(--border);
+  border-radius: var(--r-sm); color: var(--text); padding: 11px 13px;
+  font-size: 13px; font-family: var(--font); font-weight: 400; resize: vertical;
+  line-height: 1.65; outline: none; min-height: 90px;
+  transition: border-color .16s, box-shadow .16s, color .16s;
+}
+textarea.voice-area::placeholder { color: var(--text-3); }
+textarea.voice-area:focus { border-color: var(--blue); box-shadow: 0 0 0 3px rgba(37,99,235,0.08); }
+textarea.voice-area.listening { color: var(--green); border-color: var(--green-bd); }
+
+/* ─── SCAN BUTTON ────────────────────────────────────── */
+.scan-btn {
+  width: 100%; border: none; border-radius: var(--r);
+  padding: 14px 20px; font-family: var(--font); font-size: 15px; font-weight: 700;
+  cursor: pointer; transition: all .2s;
+  display: flex; align-items: center; justify-content: center; gap: 9px;
+  letter-spacing: -0.1px;
+}
+.scan-btn.ready {
+  background: linear-gradient(135deg, #2563EB, #7C3AED);
+  color: #fff; box-shadow: 0 3px 14px rgba(37,99,235,0.30);
+}
+.scan-btn.ready:hover { box-shadow: 0 5px 20px rgba(37,99,235,0.40); transform: translateY(-1px); }
+.scan-btn.disabled { background: var(--panel); color: var(--text-3); cursor: not-allowed; border: 1.5px solid var(--border); }
+.scan-btn.scanning { background: var(--blue-bg); color: var(--blue); cursor: default; border: 1.5px solid var(--blue-bd); }
+.spin { display: inline-block; animation: spin .7s linear infinite; }
+
+/* ─── RIGHT PANEL ────────────────────────────────────── */
+.right { display: flex; flex-direction: column; }
+.right .card { flex: 1; display: flex; flex-direction: column; }
+.right .card-body { flex: 1; display: flex; flex-direction: column; padding-bottom: 16px; }
+.fields { flex: 1; }
+
+/* ─── FIELD ──────────────────────────────────────────── */
+.field-wrap { margin-bottom: 12px; }
+.field-label {
+  font-size: 11px; font-weight: 700; color: var(--text-3);
+  letter-spacing: .7px; text-transform: uppercase; margin-bottom: 5px;
+  display: flex; align-items: center; gap: 5px;
+}
+.field-icon { font-size: 12px; }
+.field-input {
+  width: 100%; background: var(--panel); border: 1.5px solid var(--border);
+  border-radius: var(--r-sm); color: var(--text); padding: 9px 12px;
+  font-size: 14px; font-family: var(--font); font-weight: 500;
+  outline: none; transition: border-color .16s, box-shadow .16s;
+}
+.field-input:focus { border-color: var(--blue); box-shadow: 0 0 0 3px rgba(37,99,235,0.08); background: #fff; }
+.field-input::placeholder { color: var(--text-3); font-weight: 400; }
+textarea.field-input { resize: vertical; min-height: 72px; line-height: 1.55; }
+
+/* Field filled state */
+.field-input.filled { border-color: var(--border-2); background: #fff; }
+
+/* ─── ALERTS ─────────────────────────────────────────── */
+.alert {
+  border-radius: var(--r-sm); padding: 11px 14px;
+  font-size: 13px; font-weight: 500; margin-bottom: 14px;
+  display: flex; align-items: flex-start; gap: 9px; line-height: 1.5;
+}
+.alert-icon { font-size: 15px; flex-shrink: 0; margin-top: 0px; }
+.alert.error { background: var(--red-bg); border: 1px solid var(--red-bd); color: #991B1B; }
+.alert.success { background: var(--green-bg); border: 1px solid var(--green-bd); color: #065F46; animation: popIn .3s ease; }
+
+/* ─── SAVE BUTTON ────────────────────────────────────── */
+.save-btn {
+  width: 100%; border: none; border-radius: var(--r);
+  padding: 14px 20px; font-family: var(--font); font-size: 15px; font-weight: 700;
+  cursor: pointer; transition: all .2s; letter-spacing: -0.1px;
+  display: flex; align-items: center; justify-content: center; gap: 8px; margin-top: 6px;
+}
+.save-btn.ready {
+  background: linear-gradient(135deg, #059669, #0D9488);
+  color: #fff; box-shadow: 0 3px 14px rgba(5,150,105,0.28);
+}
+.save-btn.ready:hover { box-shadow: 0 5px 20px rgba(5,150,105,0.38); transform: translateY(-1px); }
+.save-btn.disabled { background: var(--panel); color: var(--text-3); cursor: not-allowed; border: 1.5px solid var(--border); }
+
+/* ─── SESSION LOG ────────────────────────────────────── */
+.log-section { margin-top: 20px; display: none; }
+.log-section.visible { display: block; animation: fadeUp .3s ease; }
+.log-header {
+  display: flex; align-items: center; justify-content: space-between;
+  margin-bottom: 12px;
+}
+.log-title { font-size: 13px; font-weight: 700; color: var(--text-2); }
+.log-count {
+  background: var(--green-bg); border: 1px solid var(--green-bd);
+  border-radius: 20px; padding: 3px 11px;
+  font-size: 12px; font-weight: 700; color: var(--green);
+}
+.log-table { background: var(--surface); border-radius: var(--r); border: 1px solid var(--border); overflow: hidden; box-shadow: var(--sh-xs); }
+.log-row {
+  display: grid; grid-template-columns: 1.1fr 1fr 1.5fr 1fr 50px;
+  gap: 0; padding: 11px 16px; font-size: 13px; color: var(--text-2);
+  border-bottom: 1px solid var(--border); align-items: center;
+  transition: background .12s;
+}
+.log-row:last-child { border-bottom: none; }
+.log-row:hover { background: var(--panel); }
+.log-row.header-row {
+  background: var(--panel); font-size: 10px; font-weight: 700;
+  text-transform: uppercase; letter-spacing: .6px; color: var(--text-3);
+}
+.log-row .name { color: var(--text); font-weight: 700; }
+.log-row .email { color: var(--blue); }
+.log-row .time { color: var(--text-3); font-size: 11px; }
+.log-row .tag {
+  display: inline-block; background: var(--green-bg);
+  border: 1px solid var(--green-bd); border-radius: 20px;
+  padding: 2px 8px; font-size: 10px; font-weight: 700; color: var(--green);
+}
+
+/* ─── LEFT COLUMN LAYOUT ─────────────────────────────── */
+.left { display: flex; flex-direction: column; gap: 16px; }
+
+/* ─── SECTION LABEL ──────────────────────────────────── */
+.section-label { font-size: 13px; font-weight: 700; color: var(--text-2); }
+
+/* ─── KEYFRAMES ──────────────────────────────────────── */
+@keyframes spin    { to { transform: rotate(360deg); } }
+@keyframes fadeUp  { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }
+@keyframes popIn   { 0%,100% { transform: scale(1); } 50% { transform: scale(1.02); } }
+
+/* ─── MOBILE ─────────────────────────────────────────── */
+@media (max-width: 680px) {
+  .nav { padding: 0 16px; }
+  .nav-name { font-size: 15px; }
+  .hero { padding: 18px 20px; }
+  .hero-text h1 { font-size: 17px; }
+  .hero-steps { display: none; }
+  .page { padding: 16px 14px 60px; }
+  .main { grid-template-columns: 1fr; }
+  .scan-btn, .save-btn { font-size: 16px; padding: 16px; }
+  .field-input { font-size: 16px !important; }
+  .log-row { grid-template-columns: 1fr 1fr 50px; }
+  .log-row .company, .log-row .phone { display: none; }
+  .slide-panel { top: 58px; }
+}
+</style>
 </head>
 <body>
 
-<!-- HEADER -->
-<div class="header">
-  <div>
-    <div class="logo">Card<span>→Sheet</span></div>
-    <div class="tagline">CONFERENCE CONTACT CAPTURE</div>
+<!-- ─── NAV ──────────────────────────────────────────── -->
+<nav class="nav">
+  <div class="nav-left">
+    <div class="nav-logo-icon">🪪</div>
+    <span class="nav-name">CardScan</span>
   </div>
-  <div class="header-actions">
-    <div class="badge" id="savedBadge">0 saved today</div>
-    <button class="setup-btn" id="googleConnectBtn" onclick="toggleGooglePanel()" style="border-color:rgba(66,133,244,0.4);color:#4285f4;">🔵 Connect Sheets</button>
+  <div class="nav-right">
+    <div class="count-badge">
+      <div class="count-dot"></div>
+      <span id="savedBadge">0 saved</span>
+    </div>
+    <button class="nav-btn google" id="googleConnectBtn" onclick="toggleGooglePanel()">
+      <svg viewBox="0 0 18 18" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M17.64 9.2c0-.637-.057-1.251-.164-1.84H9v3.481h4.844c-.209 1.125-.843 2.078-1.796 2.717v2.258h2.908c1.702-1.567 2.684-3.875 2.684-6.615z" fill="#4285F4"/><path d="M9 18c2.43 0 4.467-.806 5.956-2.18l-2.908-2.259c-.806.54-1.837.86-3.048.86-2.344 0-4.328-1.584-5.036-3.711H.957v2.332A8.997 8.997 0 009 18z" fill="#34A853"/><path d="M3.964 10.71A5.41 5.41 0 013.682 9c0-.593.102-1.17.282-1.71V4.958H.957A8.996 8.996 0 000 9c0 1.452.348 2.827.957 4.042l3.007-2.332z" fill="#FBBC05"/><path d="M9 3.58c1.321 0 2.508.454 3.44 1.345l2.582-2.58C13.463.891 11.426 0 9 0A8.997 8.997 0 00.957 4.958L3.964 6.29C4.672 4.163 6.656 3.58 9 3.58z" fill="#EA4335"/></svg>
+      Connect Sheets
+    </button>
   </div>
-</div>
+</nav>
 
-<!-- API key handled server-side -->
+<!-- ─── PANEL BACKDROP ────────────────────────────────── -->
+<div class="panel-backdrop" id="panelBackdrop" onclick="closeAllPanels()"></div>
 
-<!-- GOOGLE CONNECT PANEL -->
-<div class="setup-panel" id="googlePanel" style="border-color:rgba(66,133,244,0.3);background:rgba(66,133,244,0.04);">
-  <div class="setup-title" style="color:#4285f4">GOOGLE SHEETS CONNECTION</div>
+<!-- ─── GOOGLE PANEL ──────────────────────────────────── -->
+<div class="slide-panel" id="googlePanel">
+  <div class="panel-header">
+    <div class="panel-title">Google Sheets</div>
+    <button class="panel-close" onclick="closeAllPanels()">✕</button>
+  </div>
+
   <div id="gNotConnected">
-    <div class="setup-steps" style="margin-bottom:14px">Connect your Google account to automatically save contacts to a new spreadsheet.</div>
-    <div id="googleSignInBtn" style="display:inline-block;cursor:pointer;background:#4285f4;border-radius:8px;padding:11px 22px;color:#fff;font-size:13px;font-family:var(--mono);letter-spacing:1px;border:none;" onclick="signInGoogle()">
-      <span style="margin-right:8px">🔵</span> Sign in with Google
-    </div>
+    <p class="panel-hint" style="margin-bottom:20px">Connect your Google account once. Every scan will be saved automatically to your own Google Sheet — no manual copying needed.</p>
+    <button class="google-signin-btn" onclick="signInGoogle()">
+      <svg viewBox="0 0 18 18" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M17.64 9.2c0-.637-.057-1.251-.164-1.84H9v3.481h4.844c-.209 1.125-.843 2.078-1.796 2.717v2.258h2.908c1.702-1.567 2.684-3.875 2.684-6.615z" fill="white" fill-opacity=".9"/><path d="M9 18c2.43 0 4.467-.806 5.956-2.18l-2.908-2.259c-.806.54-1.837.86-3.048.86-2.344 0-4.328-1.584-5.036-3.711H.957v2.332A8.997 8.997 0 009 18z" fill="white" fill-opacity=".9"/><path d="M3.964 10.71A5.41 5.41 0 013.682 9c0-.593.102-1.17.282-1.71V4.958H.957A8.996 8.996 0 000 9c0 1.452.348 2.827.957 4.042l3.007-2.332z" fill="white" fill-opacity=".9"/><path d="M9 3.58c1.321 0 2.508.454 3.44 1.345l2.582-2.58C13.463.891 11.426 0 9 0A8.997 8.997 0 00.957 4.958L3.964 6.29C4.672 4.163 6.656 3.58 9 3.58z" fill="white" fill-opacity=".9"/></svg>
+      Sign in with Google
+    </button>
   </div>
+
   <div id="gConnected" style="display:none">
-    <div style="display:flex;align-items:center;gap:12px;margin-bottom:12px">
-      <img id="gAvatar" src="" style="width:36px;height:36px;border-radius:50%;border:2px solid #4285f4" onerror="this.style.display='none'">
+    <div class="connected-card">
+      <img id="gAvatar" src="" class="connected-avatar" onerror="this.style.display='none'">
       <div>
-        <div id="gName" style="color:#f1f5f9;font-size:13px;font-weight:700"></div>
-        <div id="gEmail" style="color:#64748b;font-size:11px"></div>
+        <div class="connected-name" id="gName"></div>
+        <div class="connected-email" id="gEmail"></div>
       </div>
-      <div style="margin-left:auto;background:rgba(34,197,94,0.1);border:1px solid rgba(34,197,94,0.3);border-radius:20px;padding:4px 12px;color:#22c55e;font-size:10px;letter-spacing:1px">✓ CONNECTED</div>
+      <div class="connected-tick">✓ Live</div>
     </div>
-    <div class="field-label" style="margin-bottom:6px">SPREADSHEET NAME</div>
-    <input class="url-input" id="sheetName" type="text" placeholder="Conference Contacts 2026" style="margin-bottom:12px"/>
-    <div style="font-size:11px;color:#64748b;margin-bottom:12px">A new Google Sheet with this name will be created in your Google Drive automatically.</div>
-    <button class="save-setup-btn" style="background:#4285f4;" onclick="saveGoogleSetup()">CONFIRM & CLOSE ✓</button>
-    <button onclick="signOutGoogle()" style="margin-left:10px;background:transparent;border:1px solid #334155;border-radius:6px;padding:8px 16px;color:#64748b;font-size:11px;cursor:pointer;font-family:var(--mono);">Sign out</button>
+
+    <div class="panel-divider"></div>
+    <div class="panel-label">Spreadsheet Name</div>
+    <input class="panel-input" id="sheetName" type="text" placeholder="Conference Contacts 2026">
+    <p class="panel-hint">A new Google Sheet with this name will be created in your Drive. Changing this name will create a fresh sheet next time you save.</p>
+    <button class="panel-save-btn" onclick="saveGoogleSetup()">Confirm & Close</button>
+    <div style="margin-top:10px;text-align:center">
+      <button class="signout-btn" onclick="signOutGoogle()">Sign out</button>
+    </div>
   </div>
 </div>
 
-<!-- MAIN GRID -->
-<div class="main">
+<!-- ─── PAGE ──────────────────────────────────────────── -->
+<div class="page">
 
-  <!-- LEFT: Upload + Voice -->
-  <div class="left">
-
-    <!-- Drop Zone -->
-    <div class="drop-zone" id="dropZone" onclick="document.getElementById('fileInput').click()"
-      ondrop="handleDrop(event)" ondragover="handleDragOver(event)" ondragleave="handleDragLeave(event)">
-      <input type="file" id="fileInput" accept="image/*" style="display:none" onchange="handleFileInput(event)">
-      <div class="drop-placeholder" id="dropPlaceholder">
-        <div class="drop-icon">🪪</div>
-        <div class="drop-label">DROP CARD PHOTO HERE</div>
-        <div class="drop-sub">or click to browse from your phone / computer</div>
-      </div>
+  <!-- Hero -->
+  <div class="hero">
+    <div class="hero-text">
+      <h1>AI Business Card Scanner</h1>
+      <p>Snap, scan, and save contacts to Google Sheets in seconds.</p>
     </div>
-
-    <!-- Voice Notes -->
-    <div class="voice-box">
-      <div class="voice-header">
-        <div class="section-label">VOICE NOTES</div>
-        <button class="rec-btn" id="recBtn" onclick="toggleRecording()">⏺ RECORD</button>
-      </div>
-      <textarea class="voice-area" id="voiceArea" rows="3" placeholder="Hit Record and speak your meeting notes, or type here..."></textarea>
+    <div class="hero-steps">
+      <div class="hero-step"><div class="hero-step-num">1</div> Upload Card</div>
+      <div class="hero-step"><div class="hero-step-num">2</div> AI Scans</div>
+      <div class="hero-step"><div class="hero-step-num">3</div> Saved to Sheet</div>
     </div>
-
-    <!-- Scan Button -->
-    <button class="scan-btn disabled" id="scanBtn" onclick="scanCard()">⚡ SCAN WITH AI</button>
   </div>
 
-  <!-- RIGHT: Extracted Data -->
-  <div class="right">
-    <div class="section-label" style="margin-bottom:16px">EXTRACTED DATA</div>
-    <div id="alertBox"></div>
-    <div class="fields">
-      <div class="field-wrap">
-        <div class="field-label">FULL NAME</div>
-        <input class="field-input" id="fName" type="text" placeholder="—">
+  <!-- Main Grid -->
+  <div class="main">
+
+    <!-- LEFT -->
+    <div class="left">
+
+      <!-- Upload Card -->
+      <div class="card">
+        <div class="card-header">
+          <span class="card-title">Business Card Photo</span>
+        </div>
+        <div class="card-body">
+          <div class="drop-zone" id="dropZone"
+            onclick="document.getElementById('fileInput').click()"
+            ondrop="handleDrop(event)"
+            ondragover="handleDragOver(event)"
+            ondragleave="handleDragLeave(event)">
+            <input type="file" id="fileInput" accept="image/*" style="display:none" onchange="handleFileInput(event)">
+            <div class="drop-placeholder" id="dropPlaceholder">
+              <div class="drop-icon-wrap">🪪</div>
+              <div class="drop-label">Drop card photo here</div>
+              <div class="drop-sub">or <span>click to browse</span> — phone camera works great</div>
+            </div>
+          </div>
+        </div>
       </div>
-      <div class="field-wrap">
-        <div class="field-label">COMPANY</div>
-        <input class="field-input" id="fCompany" type="text" placeholder="—">
+
+      <!-- Voice Notes -->
+      <div class="card">
+        <div class="card-header">
+          <span class="card-title">Meeting Notes</span>
+          <button class="rec-btn" id="recBtn" onclick="toggleRecording()">
+            <span class="rec-dot"></span>
+            Record
+          </button>
+        </div>
+        <div class="card-body">
+          <textarea class="voice-area" id="voiceArea" rows="3"
+            placeholder="Tap Record and speak — or type notes about this person, what you discussed, follow-ups..."></textarea>
+        </div>
       </div>
-      <div class="field-wrap">
-        <div class="field-label">EMAIL ADDRESS</div>
-        <input class="field-input" id="fEmail" type="email" placeholder="—">
-      </div>
-      <div class="field-wrap">
-        <div class="field-label">PHONE NUMBER</div>
-        <input class="field-input" id="fPhone" type="tel" placeholder="—">
-      </div>
-      <div class="field-wrap">
-        <div class="field-label">MEETING NOTES</div>
-        <textarea class="field-input" id="fNotes" placeholder="Notes from your voice recording or type here..."></textarea>
+
+      <!-- Scan CTA -->
+      <button class="scan-btn disabled" id="scanBtn" onclick="scanCard()">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/></svg>
+        Scan with AI
+      </button>
+    </div>
+
+    <!-- RIGHT -->
+    <div class="right">
+      <div class="card" style="flex:1">
+        <div class="card-header">
+          <span class="card-title">Extracted Contact</span>
+        </div>
+        <div class="card-body">
+          <div id="alertBox"></div>
+          <div class="fields">
+            <div class="field-wrap">
+              <div class="field-label"><span class="field-icon">👤</span> Full Name</div>
+              <input class="field-input" id="fName" type="text" placeholder="Will appear after scan">
+            </div>
+            <div class="field-wrap">
+              <div class="field-label"><span class="field-icon">🏢</span> Company</div>
+              <input class="field-input" id="fCompany" type="text" placeholder="Will appear after scan">
+            </div>
+            <div class="field-wrap">
+              <div class="field-label"><span class="field-icon">✉️</span> Email Address</div>
+              <input class="field-input" id="fEmail" type="email" placeholder="Will appear after scan">
+            </div>
+            <div class="field-wrap">
+              <div class="field-label"><span class="field-icon">📞</span> Phone Number</div>
+              <input class="field-input" id="fPhone" type="tel" placeholder="Will appear after scan">
+            </div>
+            <div class="field-wrap">
+              <div class="field-label"><span class="field-icon">📝</span> Notes</div>
+              <textarea class="field-input" id="fNotes" placeholder="Your voice/meeting notes will appear here"></textarea>
+            </div>
+          </div>
+          <button class="save-btn ready" id="saveBtn" onclick="saveToSheets()">
+            <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/><polyline points="17,21 17,13 7,13 7,21"/><polyline points="7,3 7,8 15,8"/></svg>
+            Save to Google Sheets
+          </button>
+        </div>
       </div>
     </div>
-    <button class="save-btn disabled" id="saveBtn" onclick="saveToSheets()">📊 SAVE TO GOOGLE SHEETS</button>
   </div>
-</div>
 
-<!-- SESSION LOG -->
-<div class="log-section" id="logSection">
-  <div class="section-label" style="margin-bottom:14px" id="logTitle">SESSION LOG — 0 CONTACTS</div>
-  <div id="logRows"></div>
-</div>
+  <!-- Session Log -->
+  <div class="log-section" id="logSection">
+    <div class="log-header">
+      <div class="log-title">Saved This Session</div>
+      <div class="log-count" id="logTitle">0 contacts</div>
+    </div>
+    <div class="log-table">
+      <div class="log-row header-row">
+        <span>Name</span><span>Company</span><span class="email">Email</span><span class="phone">Phone</span><span>Time</span>
+      </div>
+      <div id="logRows"></div>
+    </div>
+  </div>
+
+</div><!-- /page -->
 
 <script>
   let imageFile = null;
@@ -375,8 +654,15 @@
   // ── SETUP ──────────────────────────────────────────────
   function toggleSetup() { /* removed */ }
   function toggleGooglePanel() {
-    document.getElementById('googlePanel').classList.toggle('open');
-    document.getElementById('setupPanel').classList.remove('open');
+    const panel = document.getElementById('googlePanel');
+    const backdrop = document.getElementById('panelBackdrop');
+    const isOpen = panel.classList.contains('open');
+    if (isOpen) { closeAllPanels(); }
+    else { panel.classList.add('open'); backdrop.classList.add('open'); }
+  }
+  function closeAllPanels() {
+    document.getElementById('googlePanel').classList.remove('open');
+    document.getElementById('panelBackdrop').classList.remove('open');
   }
   function saveSetup() { /* removed */ }
   function saveGoogleSetup() {
@@ -384,7 +670,7 @@
     localStorage.setItem('cardsheet_sheetname', sheetNamePref);
     spreadsheetId = '';
     localStorage.removeItem('cardsheet_sheetid');
-    document.getElementById('googlePanel').classList.remove('open');
+    closeAllPanels();
   }
 
   // ── GOOGLE AUTH ────────────────────────────────────────
@@ -505,7 +791,7 @@
     reader.readAsDataURL(file);
     resetFields();
     setScanReady(true);
-    setSaveReady(false);
+    setSaveReady(true);
     clearAlert();
   }
 
@@ -552,12 +838,12 @@
     const btn = document.getElementById('recBtn');
     clearInterval(pulseTimer);
     if (on) {
-      btn.textContent = '⏹ STOP';
+      btn.innerHTML = '<span class="rec-dot"></span> Stop';
       btn.classList.add('active');
       let p = false;
       pulseTimer = setInterval(() => { btn.classList.toggle('pulse', (p = !p)); }, 600);
     } else {
-      btn.textContent = '⏺ RECORD';
+      btn.innerHTML = '<span class="rec-dot"></span> Record';
       btn.classList.remove('active', 'pulse');
     }
   }
@@ -572,7 +858,7 @@
 
     const scanBtn = document.getElementById('scanBtn');
     scanBtn.className = 'scan-btn scanning';
-    scanBtn.innerHTML = '<span class="spin">⟳</span> SCANNING WITH AI...';
+    scanBtn.innerHTML = '<span class="spin">⟳</span> Scanning with AI...';
 
     try {
       const b64 = await toBase64(imageFile);
@@ -611,24 +897,23 @@
       setScanReady(true);
       setSaveReady(true);
       scanBtn.className = 'scan-btn ready';
-      scanBtn.textContent = '⚡ SCAN AGAIN';
+      scanBtn.innerHTML = 'Scan Another Card';
 
     } catch (err) {
       scanBtn.className = 'scan-btn ready';
-      scanBtn.textContent = '⚡ SCAN WITH AI';
+      scanBtn.innerHTML = 'Scan with AI';
       setScanReady(true);
-      showAlert('error', '⚠ ' + (err.message || 'Unknown error. Check API key and internet connection.'));
+      showAlert('error', err.message || 'Unknown error. Check your internet connection.');
     }
   }
 
   // ── SAVE ───────────────────────────────────────────────
   async function saveToSheets() {
-    if (!scanDone) return;
     if (!gAccessToken) { showAlert('error', '⚠ Please connect your Google account first — click "Connect Sheets" above.'); toggleGooglePanel(); return; }
 
     const saveBtn = document.getElementById('saveBtn');
     saveBtn.className = 'save-btn disabled';
-    saveBtn.textContent = '⟳ SAVING...';
+    saveBtn.innerHTML = '<span class="spin">⟳</span> Saving...';
     clearAlert();
 
     const row = [
@@ -643,8 +928,8 @@
     try {
       await appendToSheet([row]);
       savedCount++;
-      document.getElementById('savedBadge').textContent = savedCount + ' saved today';
-      showAlert('success', '✓ Saved to Google Sheets!');
+      document.getElementById('savedBadge').textContent = savedCount + ' saved';
+      showAlert('success', 'Contact saved to Google Sheets!');
       addLogRow({ name: row[0], company: row[1], email: row[2], phone: row[3], notes: row[4] });
       setTimeout(() => { resetAll(); }, 2200);
     } catch(err) {
@@ -652,12 +937,12 @@
       if (err.message && err.message.includes('401')) {
         gAccessToken = ''; localStorage.removeItem('cardsheet_gtoken');
         updateGoogleUI();
-        showAlert('error', '⚠ Google session expired. Please reconnect via "Connect Sheets".');
+        showAlert('error', 'Google session expired. Please reconnect via "Connect Sheets".');
       } else {
-        showAlert('error', '⚠ Could not save: ' + err.message);
+        showAlert('error', 'Could not save: ' + err.message);
       }
       saveBtn.className = 'save-btn ready';
-      saveBtn.textContent = '📊 SAVE TO GOOGLE SHEETS';
+      saveBtn.innerHTML = 'Save to Google Sheets';
     }
   }
 
@@ -665,11 +950,12 @@
   function addLogRow(d) {
     const logSection = document.getElementById('logSection');
     logSection.classList.add('visible');
-    document.getElementById('logTitle').textContent = `SESSION LOG — ${savedCount} CONTACT${savedCount !== 1 ? 'S' : ''} SAVED`;
+    document.getElementById('logTitle').textContent = savedCount + ' contact' + (savedCount !== 1 ? 's' : '');
     const row = document.createElement('div');
     row.className = 'log-row';
     const t = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
-    row.innerHTML = `<span class="name">${d.name || '—'}</span><span>${d.company || '—'}</span><span class="email">${d.email || '—'}</span><span>${d.phone || '—'}</span><span class="time">${t}</span>`;
+    row.style.animation = 'fadeUp .25s ease';
+    row.innerHTML = `<span class="name">${d.name||'—'}</span><span class="company">${d.company||'—'}</span><span class="email">${d.email||'—'}</span><span class="phone">${d.phone||'—'}</span><span class="time">${t}</span>`;
     document.getElementById('logRows').prepend(row);
   }
 
@@ -685,19 +971,19 @@
 
   function setScanReady(on) {
     const btn = document.getElementById('scanBtn');
-    if (on && imageFile) { btn.className = 'scan-btn ready'; btn.textContent = '⚡ SCAN WITH AI'; }
-    else if (!on && btn.className !== 'scan-btn scanning') { btn.className = 'scan-btn disabled'; btn.textContent = '⚡ SCAN WITH AI'; }
+    if (on && imageFile) { btn.className = 'scan-btn ready'; btn.innerHTML = 'Scan with AI'; }
+    else if (!on && btn.className !== 'scan-btn scanning') { btn.className = 'scan-btn disabled'; btn.innerHTML = 'Scan with AI'; }
   }
 
   function setSaveReady(on) {
     const btn = document.getElementById('saveBtn');
-    if (on) { btn.className = 'save-btn ready'; btn.textContent = '📊 SAVE TO GOOGLE SHEETS'; }
-    else { btn.className = 'save-btn disabled'; btn.textContent = '📊 SAVE TO GOOGLE SHEETS'; }
+    if (on) { btn.className = 'save-btn ready'; btn.innerHTML = 'Save to Google Sheets'; }
+    else { btn.className = 'save-btn disabled'; btn.innerHTML = 'Save to Google Sheets'; }
   }
 
   function showAlert(type, msg) {
-    const box = document.getElementById('alertBox');
-    box.innerHTML = `<div class="alert ${type}">${msg}</div>`;
+    const icon = type === 'error' ? '⚠️' : '✅';
+    document.getElementById('alertBox').innerHTML = `<div class="alert ${type}"><span class="alert-icon">${icon}</span><span>${msg}</span></div>`;
   }
   function clearAlert() { document.getElementById('alertBox').innerHTML = ''; }
 
@@ -720,7 +1006,7 @@
     finalTranscript = '';
     clearAlert();
     setScanReady(false);
-    setSaveReady(false);
+    setSaveReady(true);
   }
 </script>
 </body>
